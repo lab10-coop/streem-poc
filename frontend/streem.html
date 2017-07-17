@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Streem</title>
+    <meta charset="UTF-8">
+</head>
+
+<body>
+    <h3>Streem PoC Demo</h3>
+    <p>Works only in an Ethereum aware Browser (e.g. Mist, Browser with Metamask plugin).<br>
+    The connected Blockchain needs to have the Streem contract deployed and the file js/streem_contract.js needs to have the correct contract ABI and address.<br></p>
+    Receiver: <input id="receiver" type="text"/><br>
+    Speed (units per second): <input id="speed" type="number"/><br>
+    <button id="start-stream">Start Stream</button><br>
+    <button id="stop-stream">Stop Stream</button><br>
+
+    <hr>
+    My balance: <span id="mybalance-result">-</span><br>
+    Receiver balance: <span id="somebalance-result">-</span><br>
+    <p>(Automatically updated with every new block)</p>
+
+    <script type="text/javascript" src="lib/web3.js"></script>
+    <script type="text/javascript" src="js/streem_contract.js"></script>
+    <script type="text/javascript" src="js/streem.js"></script>
+</body>
+</html>

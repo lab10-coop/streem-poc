@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Streem</title>
+    <meta charset="UTF-8">
+</head>
+
+<body>
+<header>
+    <div class="headerInner">
+        <h1>
+            <span class="line1">Übersicht </span>
+            <span class="line2">Unternehmen</span>
+        </h1>
+        <div class="selectUser">
+            <select id="preset-selector">
+                <option hidden selected>Beispiel-Daten wählen</option>
+                <option value="producer1">AGCS-2016-06-01</option>
+                <option value="producer2">AGCS-2016-06-02</option>
+            </select>
+        </div>
+    </div>
+</header>
+<section class="main">
+    <div class="sectionInner">
+
+        <h2><span>Daten für ein neues Zertifikat übermitteln</span></h2>
+        <div class="newCertificate">
+            <form class="formBox" id="form1">
+
+                <div class="formItem formItemSend">
+                    <div class="formItemLabel"><label for="send-org">Sende-Unternehmen</label></div>
+                    <div class="formItemField"><input id="send-org" type="text"/></div>
+                    <div class="clear"></div>
+                </div>
+                <div class="formItem formItemText formItemCharge">
+                    <div class="formItemLabel"><label for="charge-id">Chargen-ID im Senderegister</label></div>
+                    <div class="formItemField"><input id="charge-id" type="text"/></div>
+                    <div class="clear"></div>
+                </div>
+
+                <div class="formItem formItemAmount">
+                    <div class="formItemLabel"><label for="amount-kwh">Menge in kWh</label></div>
+                    <div class="formItemField"><input id="amount-kwh" type="number" min="1" step="1"></div>
+                    <div class="clear"></div>
+                </div>
+
+
+                <div class="newCertificateMoreFieldsTrigger">
+                    <span class="show">Weitere Felder anzeigen</span>
+                    <span class="hide">Felder Ausblenden</span>
+                </div>
+                <div class="newCertificateMoreFields">
+                    <div class="formItem formItemText">
+                        <div class="formItemLabel"><label for="exchange-id">Austausch-ID</label></div>
+                        <div class="formItemField"><input id="exchange-id" type="text"/></div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="formItem formItemSend">
+                        <div class="formItemLabel"><label for="send-addr">Sende-Unternehmen Anschrift</label></div>
+                        <div class="formItemField"><input id="send-addr" type="text"/></div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="formItem formItemText">
+                        <div class="formItemLabel"><label for="send-reg">Senderegister</label></div>
+                        <div class="formItemField"><input id="send-reg" type="text"/></div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="formItem formItemText">
+                        <div class="formItemLabel"><label for="target-reg">Zielregister</label></div>
+                        <div class="formItemField"><input id="target-reg" type="text"/></div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="formItem formItemText">
+                        <div class="formItemLabel"><label for="date-application">Datum der
+                            Transfer-Antragstellung</label></div>
+                        <div class="formItemField"><input id="date-application" type="text"/></div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="formItem formItemText">
+                        <div class="formItemLabel"><label for="recv-org">Empfänger-Unternehmen</label></div>
+                        <div class="formItemField"><input id="recv-org" type="text"/></div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="formItem formItemText">
+                        <div class="formItemLabel"><label for="recv-addr">Empfänger-Unternehmen Anschrift</label></div>
+                        <div class="formItemField"><input id="recv-addr" type="text"/></div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="formItem formItemText">
+                        <div class="formItemLabel"><label for="recv-id">Empfänger-ID/Kontonummer</label></div>
+                        <div class="formItemField"><input id="recv-id" type="text"/></div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="formItem formItemText">
+                        <div class="formItemLabel"><label for="location-handover">Ort der Übergabe</label></div>
+                        <div class="formItemField"><input id="location-handover" type="text"/></div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="formItem formItemText">
+                        <div class="formItemLabel"><label for="feed-start">Einspeisezeitraum Beginn</label></div>
+                        <div class="formItemField"><input id="feed-start" type="text"/></div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="formItem formItemText">
+                        <div class="formItemLabel"><label for="feed-end">Einspeisezeitraum Ende</label></div>
+                        <div class="formItemField"><input id="feed-end" type="text"/></div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="formItem formItemText">
+                        <div class="formItemLabel"><label for="delivery-kind">Art der Lieferung</label></div>
+                        <div class="formItemField"><input id="delivery-kind" type="text"/></div>
+                        <div class="clear"></div>
+                    </div>
+
+                    <div class="formItem formItemText">
+                        <div class="formItemLabel"><label for="country">Herkunftsland</label></div>
+                        <div class="formItemField"><input id="country" type="text"/></div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="formItem formItemText">
+                        <div class="formItemLabel"><label for="plant-nr">Anlagennummer</label></div>
+                        <div class="formItemField"><input id="plant-nr" type="text"/></div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="formItem formItemText">
+                        <div class="formItemLabel"><label for="plant-name">Anlagename</label></div>
+                        <div class="formItemField"><input id="plant-name" type="text"/></div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="formItem formItemText">
+                        <div class="formItemLabel"><label for="plant-addr">Anlagenadresse</label></div>
+                        <div class="formItemField"><input id="plant-addr" type="text"/></div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="formItem formItemText">
+                        <div class="formItemLabel"><label for="prod-startdate">Inbetriebnahme-Datum</label></div>
+                        <div class="formItemField"><input id="prod-startdate" type="text"/></div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="formItem formItemText">
+                        <div class="formItemLabel"><label for="count-point">Zählpunkt der Einspeisung</label></div>
+                        <div class="formItemField"><input id="count-point" type="text"/></div>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="formItem formItemText">
+                        <div class="formItemLabel"><label for="counter-nr">Zählernummer</label></div>
+                        <div class="formItemField"><input id="counter-nr" type="text"/></div>
+                        <div class="clear"></div>
+                    </div>
+                </div>
+
+                <div class="submitContainer">
+                    <input class="btn btn-default" value="Abschicken &raquo;" readonly onclick="onCertRequestClicked()">
+                </div>
+
+            </form>
+            <p>Kontostand: <span id="token-balance">-</span> MET-Token <a href="https://wallet.ethereum.org/"
+                                                                          target="_blank">Mein Token-Konto</a></p>
+
+        </div>
+
+
+        <h2><span>Existierende Zertifikate</span></h2>
+
+        <div class="myCertificates">
+
+            <div class="myCertificatesHeadline">
+                <div class="column col1">Unternehmen</div>
+                <div class="column col2">Chargen-ID</div>
+                <div class="column col3">Menge in kWh</div>
+                <div class="column col4">PDF</div>
+                <div class="column col5">Status</div>
+                <div class="column col6">Bestätigungen</div>
+                <div class="clear"></div>
+            </div>
+
+            <div id="cert-list">
+
+            </div>
+        </div>
+    </div>
+</section>
+<footer>
+    <p>Demo v.0.1 / May 2017 / <a href="produce.html">.</a><a href="produce_manual.html">.</a><a
+            href="certify.html">.</a><a href="certificate-pdf.html" target="_blank">.</a></p>
+</footer>
+
+<script type="text/javascript" src="lib/web3.js"></script>
+<script type="text/javascript" src="js/contracts.js"></script>
+<script type="text/javascript" src="js/config.js"></script>
+<script type="text/javascript" src="js/web3-init.js"></script>
+<script type="text/javascript" src="js/produce.js"></script>
+</body>
+</html>
