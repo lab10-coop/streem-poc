@@ -1,6 +1,6 @@
 ## About
 
-The idea is described in more detail [here]().  
+The idea is described in more detail [here](https://cloud.lab10.io/s/Z3cKDm4asf4BPdc).  
 
 ## Status
 
