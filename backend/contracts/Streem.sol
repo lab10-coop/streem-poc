@@ -153,7 +153,7 @@ contract Streem {
         uint256 inStreamBal = exists(inS) ? streamBalance(inS) : 0;
 
         var outS = outStreams[_owner];
-        uint256 outStreamBal = exists(inS) ? streamBalance(outS) : 0;
+        uint256 outStreamBal = exists(outS) ? streamBalance(outS) : 0;
 
         // TODO: check overflow before casting
         return staticBalances[_owner] + inStreamBal - outStreamBal;
