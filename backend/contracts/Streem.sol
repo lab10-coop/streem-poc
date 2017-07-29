@@ -11,7 +11,12 @@ contract Streem {
     uint8 public constant decimals = 0;
     address owner;
 
-    mapping (address => uint256) staticBalances;
+    /*
+     * this map stores the fractions of account balances which are already "settled" by a transaction.
+     * It's just an implementation detail - the "settled" fraction of balance is in no way different or superior to
+     * the "unsettled" one.
+     */
+    mapping (address => uint256) settledBalances;
 
     struct Stream {
         address sender;
@@ -31,14 +36,14 @@ contract Streem {
 
     function Streem(uint initialSupply) {
         owner = msg.sender;
-        staticBalances[msg.sender] = initialSupply;
+        settledBalances[msg.sender] = initialSupply;
         totalSupply = initialSupply;
     }
 
     // TODO: this is just for the test token. Issuance mechanism for mainnet token to be decided.
     function issueTo(address receiver, uint256 amount) {
         require(msg.sender == owner);
-        staticBalances[receiver] += amount;
+        settledBalances[receiver] += amount;
         totalSupply += amount;
     }
 
@@ -61,15 +66,15 @@ contract Streem {
         uint256 streamBal = (now - stream.startTimestamp) * stream.perSecond;
         uint256 settleBal = 0;
         uint256 outstandingBal = 0;
-        if(streamBal <= staticBalances[msg.sender]) {
+        if(streamBal <= settledBalances[msg.sender]) {
             settleBal = streamBal;
         } else {
             // special case: the receiver (partially) defaults on the stream
-            settleBal = staticBalances[msg.sender];
+            settleBal = settledBalances[msg.sender];
             outstandingBal = streamBal - settleBal;
         }
-        staticBalances[msg.sender] -= settleBal;
-        staticBalances[stream.receiver]  += settleBal;
+        settledBalances[msg.sender] -= settleBal;
+        settledBalances[stream.receiver]  += settleBal;
 
         delete inStreams[stream.receiver];
         delete outStreams[msg.sender];
@@ -79,13 +84,13 @@ contract Streem {
 
     // TODO: needs to consider the dynamic balance (streams included). How to deal with _value > staticBalance? Allow negative staticBalance?
     function transfer(address _to, uint256 _value) {
-        //Default assumes totalSupply can't be over max (2^256 - 1).
-        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
-        //Replace the if with this one instead.
-        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        assert(staticBalances[msg.sender] >= _value && _value > 0);
-        staticBalances[msg.sender] -= _value;
-        staticBalances[_to] += _value;
+        assert(_value > 0 && balanceOf(msg.sender) >= _value);
+
+        // As a temporary solution, allow only transfers for which we have enough funds already "settled". TODO: fix
+        assert(settledBalances[msg.sender] >= _value);
+
+        settledBalances[msg.sender] -= _value;
+        settledBalances[_to] += _value;
         Transfer(msg.sender, _to, _value);
     }
 
@@ -117,7 +122,7 @@ contract Streem {
         var inS = inStreams[s.sender];
         uint256 isb = exists(inS) ? streamBalance(inS) : 0;
 
-        uint sb = staticBalances[s.sender];
+        uint sb = settledBalances[s.sender];
 
         return min(osb, sb + isb);
     }
@@ -141,7 +146,7 @@ contract Streem {
         }
 
         // TODO: check overflow before casting
-        balance = int256(staticBalances[_owner] + inStreamBal - outStreamBal);
+        balance = int256(settledBalances[_owner] + inStreamBal - outStreamBal);
         return balance;
     }
 
@@ -156,6 +161,6 @@ contract Streem {
         uint256 outStreamBal = exists(outS) ? streamBalance(outS) : 0;
 
         // TODO: check overflow before casting
-        return staticBalances[_owner] + inStreamBal - outStreamBal;
+        return settledBalances[_owner] + inStreamBal - outStreamBal;
     }
 }

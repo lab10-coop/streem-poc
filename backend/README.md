@@ -57,3 +57,9 @@ Logically identical to the *limited number of streams* option.
 But probably a considerably bigger implementation challenge in terms of complexity and gas cost. E.g. fixed size array nomore an option.
 
 A possibility could be to have *openStream()* measure the complexity of the dependencies based on the involved addresses and not execute if it exceeds some safety threshold.
+
+## Basic strategy
+
+Whenever a transaction takes place, it can be used for some bookkeeping.  
+Most importantly, a kind of intermediate settlement can be done for open streams. This can be seen as persisting the results of calculations.  
+Since dynamically calculated status snapshots depending on the current time are guaranteed / final, such states can as well be persisted.
