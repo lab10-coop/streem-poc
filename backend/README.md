@@ -31,8 +31,8 @@ Still she'd need for account for a potential parallel incoming stream.
 Problem: there could be a circular relationship. E.g. A streams to B and B streams to A.
 How to implement this without the potential for an endless recursion?
 
-a) Avoid creation of such a constellation (e.g. have *openStream()* check it)
-b) Find a way to implement it safely (should be possible, but I don't yet have an idea how)
+* Avoid creation of such a constellation (e.g. have *openStream()* check it)
+* Find a way to implement it safely (should be possible, but I don't yet have an idea how)
 
 Either way, we still need to protect from the risk of running out of gas due to many dependencies.  
 A possible solution could be a kind of maintenance cronjob which regularly creates kind of snapshots which cut down the dependencies on other streams.
