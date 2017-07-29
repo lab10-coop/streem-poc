@@ -3,6 +3,7 @@
 
 pragma solidity ^0.4.11;
 
+// TODO: decide on vocabularity for start/open, stop/close, dry/run out of funds/underwater (distinguish between low and no current funding)
 contract Streem {
     uint256 public totalSupply;
     string public constant name = "Streem";
@@ -76,6 +77,7 @@ contract Streem {
         StreamClosed(msg.sender, stream.receiver, stream.perSecond, settleBal, outstandingBal);
     }
 
+    // TODO: needs to consider the dynamic balance (streams included). How to deal with _value > staticBalance? Allow negative staticBalance?
     function transfer(address _to, uint256 _value) {
         //Default assumes totalSupply can't be over max (2^256 - 1).
         //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
@@ -87,9 +89,44 @@ contract Streem {
         Transfer(msg.sender, _to, _value);
     }
 
-    // this balance function can return a negative value if a stream went "under water"
+    // Solidity (so far) has no simple null check, using startTimestamp as guard (assuming 1970 will not return).
+    function exists(Stream s) internal constant returns (bool) {
+        return s.startTimestamp != 0;
+    }
+
+    // TODO: what's best practice for using uint vs uint256?
+    function min(uint a, uint b) constant returns (uint) {
+        return a < b ? a : b;
+    }
+
+    // returns the balance of a stream, ignoring the possibility of it running out of funds
+    function naiveStreamBalance(Stream s) internal constant returns (uint256) {
+        return (now - s.startTimestamp) * s.perSecond;
+    }
+
+    /*
+     * returns the "real" (based on sender solvency) balance of a stream.
+     * This takes the perspective of the sender, making the stream under investigation an outgoingStream.
+     * Implements min(outgoingStreamBalance, staticBalance + incomingStreamBalance)
+     * TODO: due to the possible recursion, this will lead to an endless loop in circular relations, e.g. A -> B, B -> A
+     */
+    function streamBalance(Stream s) internal constant returns (uint256) {
+        // naming: osb -> outgoingStreamBalance, isb -> incomingStreamBalance, sb -> static balance
+        uint256 osb = naiveStreamBalance(s);
+
+        var inS = inStreams[s.sender];
+        uint256 isb = exists(inS) ? streamBalance(inS) : 0;
+
+        uint sb = staticBalances[s.sender];
+
+        return min(osb, sb + isb);
+    }
+
+    // this balance function can return a negative value if an outgoing stream went "under water"
+    // and a higher than real balance if an incoming stream went "under water".
     // note that this is NOT the actual balance, just a theoretical value
-    function honestBalanceOf(address _owner) constant returns (int256 balance) {
+    // TODO: refactor
+    function owedBalanceOf(address _owner) constant returns (int256 balance) {
         uint256 inStreamBal = 0;
         var inStream = inStreams[_owner];
         // no prettier null check possible? https://ethereum.stackexchange.com/questions/871/what-is-the-zero-empty-or-null-value-of-a-struct
@@ -110,22 +147,15 @@ contract Streem {
 
     // the ERC-20 standard requires an uint return value
     // TODO: remove duplication. Maybe call honestBalance instead and take min(0, bal)
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        uint256 inStreamBal = 0;
-        var inStream = inStreams[_owner];
+    function balanceOf(address _owner) constant returns (uint256) {
+        var inS = inStreams[_owner];
         // no prettier null check possible? https://ethereum.stackexchange.com/questions/871/what-is-the-zero-empty-or-null-value-of-a-struct
-        if(inStream.startTimestamp != 0) {
-            inStreamBal = (now - inStream.startTimestamp) * inStream.perSecond;
-        }
+        uint256 inStreamBal = exists(inS) ? streamBalance(inS) : 0;
 
-        uint256 outStreamBal = 0;
-        var outStream = outStreams[_owner];
-        if(outStream.startTimestamp != 0) {
-            outStreamBal = (now - outStream.startTimestamp) * outStream.perSecond;
-        }
+        var outS = outStreams[_owner];
+        uint256 outStreamBal = exists(inS) ? streamBalance(outS) : 0;
 
         // TODO: check overflow before casting
-        balance = staticBalances[_owner] + inStreamBal - outStreamBal;
-        return balance;
+        return staticBalances[_owner] + inStreamBal - outStreamBal;
     }
 }
