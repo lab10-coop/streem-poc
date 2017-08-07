@@ -1,6 +1,6 @@
 // TODO: use the SafeMath lib of openzeppelin (implicit overflow checks etc)?
 
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.11;
 
 // Status of this contract: PoC of a basic ERC-20 token with streaming functionality (1 outgoing/incoming stream per account)
 // TODO: decide on vocabularity for start/open, stop/close, dry/run out of funds/underwater (distinguish between low and no current funding)
@@ -46,20 +46,14 @@ contract Streem {
         streams.push(Stream(0,0,0,0)); // empty first element for implicit null-like semantics
     }
 
-    // TODO: this is just for the test token. Issuance mechanism for mainnet token to be decided.
-    function issueTo(address receiver, uint256 amount) {
-        require(msg.sender == owner);
-        settledBalances[receiver] += amount;
-        totalSupply += amount;
-    }
-
     /*
      * opens a stream from the transaction sender to the given receiver with the given speed.
-     * Will succeed only if the sender has no stream open and if it has funds for at least one second
+     * Will succeed only if the sender has no stream open and isn't underfunded
      */
     function openStream(address receiver, uint256 perSecond) {
         assert(! exists(getOutStreamOf(msg.sender)));
-        assert(balanceOf(msg.sender) > perSecond);
+        //assert(balanceOf(msg.sender) > perSecond);
+        assert(balanceOf(msg.sender) >= 0); //TODO: what initial requirement makes most sense?
         // now is an alias to block.timestamp. See http://solidity.readthedocs.io/en/develop/units-and-global-variables.html?highlight=blocknumber
         var streamId = streams.push(Stream(msg.sender, receiver, perSecond, now)) - 1; // id = array_length - 1
         outStreamPtrs[msg.sender] = streamId;
@@ -204,4 +198,49 @@ contract Streem {
     }
 
     // TODO: implement the empty function?
+
+
+    // ####################### dev / testing helpers #############################
+
+    // TODO: this is just for the test token. Issuance mechanism for mainnet token to be decided.
+    function dev_issueTo(address receiver, uint256 amount) {
+        require(msg.sender == owner);
+        settledBalances[receiver] += amount;
+        totalSupply += amount;
+    }
+
+    // TODO: this is just for testing purposes
+    // reset to initial state. Needs to be called by every address involved so far
+    function dev_reset() {
+        settledBalances[msg.sender] = 0;
+        outStreamPtrs[msg.sender] = 0;
+        inStreamPtrs[msg.sender] = 0;
+
+        if(msg.sender == owner) {
+            settledBalances[msg.sender] = totalSupply;
+
+            delete streams;
+            streams.push(Stream(0,0,0,0));
+        }
+    }
+
+    function dev_streamsLength() constant returns (uint) {
+        return streams.length;
+    }
+
+    function dev_settledBalance() constant returns (int) {
+        return int(settledBalances[msg.sender]);
+    }
+
+    // returns sender, speed and age (in seconds)
+    function dev_inStream() constant returns (address, uint, uint) {
+        var s = getInStreamOf(msg.sender);
+        return (s.sender, s.perSecond, now-s.startTimestamp);
+    }
+
+    // returns receiver, speed and age (in seconds)
+    function dev_outStream() constant returns (address, uint, uint) {
+        var s = getOutStreamOf(msg.sender);
+        return (s.receiver, s.perSecond, now - s.startTimestamp);
+    }
 }

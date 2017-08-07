@@ -6,7 +6,8 @@
 set -e
 set -u
 
-truffle migrate
+# --reset makes sure a new instance of the contract is deployed
+truffle migrate --reset
 
 node apply_contract_update.js build/contracts/Streem.json ../frontend/js/streem_contract.js
 echo "update applied"

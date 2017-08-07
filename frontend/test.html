@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Streem Test</title>
+    <meta charset="UTF-8">
+    <style>
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+    </style>
+</head>
+
+<body>
+Blockchain height: <span id="blocknr">-</span><br>
+Size of streams array: <span id="nrstreams">-</span><br>
+
+<hr>
+
+<h3>Balances:</h3>
+
+<table id="detail-table">
+    <tr>
+        <th>address</th><th>balance</th><th>settled balance</th>
+        <th>instream speed</th><th>instream age</th>
+        <th>outstream speed</th><th>outstream age</th>
+    </tr>
+</table>
+
+<hr>
+
+<button id="close">Close streams</button><br>
+<button id="freeze">Freeze view</button><br>
+<button id="reset">Reset</button><br>
+
+<hr>
+
+<button id="test1">Test1</button><br>
+<button id="test2">Test1a</button><br>
+<button id="test3">Test1b</button><br>
+
+<script type="text/javascript" src="lib/web3.js"></script>
+<script type="text/javascript" src="js/streem_contract.js"></script>
+<script type="text/javascript" src="js/test.js"></script>
+</body>
+</html>

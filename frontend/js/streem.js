@@ -63,7 +63,6 @@ function showBalance(address, updateUi) {
         window.balance = ret
         const bal = web3.toDecimal(ret)
         console.log(`balance is ${bal}`)
-        //resultElem.innerHTML = bal
         updateUi(bal)
     })
 }
