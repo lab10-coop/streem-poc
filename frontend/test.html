@@ -35,9 +35,11 @@ Size of streams array: <span id="nrstreams">-</span><br>
 
 <hr>
 
-<button id="test1">Test1</button><br>
-<button id="test2">Test1a</button><br>
-<button id="test3">Test1b</button><br>
+<button id="test1">Test1: open A->B (1), open B->C (1)</button><br>
+<button id="test1a">Test1a: close A->B, wait 20, close B->C</button><br>
+<button id="test2">Test2: open A->B (1), open B->C (2)</button><br>
+<button id="test3">Test3: open A->B (1), open B->A (1)</button><br>
+<button id="test4">Test4: open A->B (1), open B->C (1), open C->A (1)</button><br>
 
 <script type="text/javascript" src="lib/web3.js"></script>
 <script type="text/javascript" src="js/streem_contract.js"></script>

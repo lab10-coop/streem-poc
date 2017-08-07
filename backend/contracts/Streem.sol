@@ -16,7 +16,7 @@ contract Streem {
      * It's just an implementation detail - the "settled" fraction of balance is in no way different or superior to
      * the "unsettled" one.
      */
-    mapping (address => uint256) settledBalances;
+    mapping (address => int256) settledBalances;
 
     struct Stream {
         address sender;
@@ -41,7 +41,7 @@ contract Streem {
     // constructor
     function Streem(uint initialSupply) {
         owner = msg.sender;
-        settledBalances[msg.sender] = initialSupply;
+        settledBalances[msg.sender] = int(initialSupply);
         totalSupply = initialSupply;
         streams.push(Stream(0,0,0,0)); // empty first element for implicit null-like semantics
     }
@@ -70,8 +70,8 @@ contract Streem {
         var settleBal = dt * s.perSecond;
         var naiveBal = naiveStreamBalance(s); // remember before manipulating the stream
 
-        settledBalances[s.sender] -= settleBal;
-        settledBalances[s.receiver] += settleBal; // inS.receiver == msg.sender
+        settledBalances[s.sender] -= int(settleBal);
+        settledBalances[s.receiver] += int(settleBal); // inS.receiver == msg.sender
         // TODO: make sure we really don't need an extra field for this intermediate settlement.
         // For correct behaviour, it's irrelevant what the start time of the stream is.
         // Applications can rely on the StreamOpened-Event for the UI.
@@ -101,16 +101,18 @@ contract Streem {
         assert(_value > 0 && balanceOf(msg.sender) >= _value);
 
         // if the settled balance doesn't suffice, settle the available funds of the ingoing stream.
-        if(settledBalances[msg.sender] < _value) {
+        /*
+        if(settledBalances[msg.sender] < int(_value)) {
             var inS = getInStreamOf(msg.sender);
             settleStream(inS);
 
             // lets check again! TODO: once the logic was validated / proofed, this checks should be superfluous
             assert(balanceOf(msg.sender) >= _value);
         }
+        */
 
-        settledBalances[msg.sender] -= _value;
-        settledBalances[_to] += _value;
+        settledBalances[msg.sender] -= int(_value);
+        settledBalances[_to] += int(_value);
         Transfer(msg.sender, _to, _value);
     }
 
@@ -157,9 +159,12 @@ contract Streem {
         var inS = getInStreamOf(s.sender);
         uint256 isb = exists(inS) ? streamBalance(inS) : 0;
 
-        uint sb = settledBalances[s.sender];
+        int sb = settledBalances[s.sender];
 
-        return min(osb, sb + isb);
+        // TODO: Proof needed
+        assert(sb + int(isb) >= 0);
+
+        return min(osb, uint(sb + int(isb)));
     }
 
     // this balance function can return a negative value if an outgoing stream went "under water"
@@ -194,7 +199,8 @@ contract Streem {
         uint256 outStreamBal = exists(outS) ? streamBalance(outS) : 0;
 
         // TODO: check overflow before casting
-        return settledBalances[_owner] + inStreamBal - outStreamBal;
+        assert(settledBalances[_owner] + int(inStreamBal) - int(outStreamBal) >= 0);
+        return uint(settledBalances[_owner] + int(inStreamBal) -int(outStreamBal));
     }
 
     // TODO: implement the empty function?
@@ -205,7 +211,7 @@ contract Streem {
     // TODO: this is just for the test token. Issuance mechanism for mainnet token to be decided.
     function dev_issueTo(address receiver, uint256 amount) {
         require(msg.sender == owner);
-        settledBalances[receiver] += amount;
+        settledBalances[receiver] += int(amount);
         totalSupply += amount;
     }
 
@@ -217,7 +223,7 @@ contract Streem {
         inStreamPtrs[msg.sender] = 0;
 
         if(msg.sender == owner) {
-            settledBalances[msg.sender] = totalSupply;
+            settledBalances[msg.sender] = int(totalSupply);
 
             delete streams;
             streams.push(Stream(0,0,0,0));
