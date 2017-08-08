@@ -213,6 +213,22 @@ function test3() {
     streem.openStream(web3.eth.accounts[0], 1, {from: web3.eth.accounts[1], gas: 200000})
 }
 
+function test3a() {
+    console.log('open stream1: speed 1 from addr0 to addr1')
+    streem.openStream(web3.eth.accounts[1], 1, {from: web3.eth.accounts[0], gas: 200000})
+
+    console.log('open stream2: speed 2 from addr1 to addr0')
+    streem.openStream(web3.eth.accounts[0], 2, {from: web3.eth.accounts[1], gas: 200000})
+}
+
+function test3b() {
+    console.log('open stream1: speed 2 from addr0 to addr1')
+    streem.openStream(web3.eth.accounts[1], 2, {from: web3.eth.accounts[0], gas: 200000})
+
+    console.log('open stream2: speed 1 from addr1 to addr0')
+    streem.openStream(web3.eth.accounts[0], 1, {from: web3.eth.accounts[1], gas: 200000})
+}
+
 function test4() {
     console.log('open stream1: speed 1 from addr0 to addr1')
     streem.openStream(web3.eth.accounts[1], 1, {from: web3.eth.accounts[0], gas: 200000})

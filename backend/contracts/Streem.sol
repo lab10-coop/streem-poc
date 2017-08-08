@@ -1,4 +1,5 @@
 // TODO: use the SafeMath lib of openzeppelin (implicit overflow checks etc)?
+// TODO: check if this complies with the recommended style: http://solidity.readthedocs.io/en/develop/style-guide.html
 
 pragma solidity ^0.4.11;
 
@@ -32,6 +33,7 @@ contract Streem {
      */
     mapping(address => uint) outStreamPtrs;
     mapping(address => uint) inStreamPtrs;
+    // TODO: convert to mapping (better suited when elements are deleted)
     Stream[] streams;
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
@@ -64,7 +66,7 @@ contract Streem {
 
     // returns the settled balance and the outstanding balance (> 0 if underfunded)
     function settleStream(Stream s) internal returns (uint, uint) {
-        var bal = streamBalance(s);
+        var bal = streamBalance(s, s, 1);
         uint dt = uint(bal / s.perSecond);
         // since we don't allow fractional seconds, the possible settleBalance may be lower than the actual streamBalance (TODO: sure?)
         var settleBal = dt * s.perSecond;
@@ -141,6 +143,11 @@ contract Streem {
         delete streams[sid];
     }
 
+    function equals(Stream s1, Stream s2) internal constant returns (bool) {
+        // TODO: not multi-stream ready
+        return s1.sender == s2.sender && s1.receiver == s2.receiver;
+    }
+
     // returns the naive "should be" balance of a stream, ignoring the possibility of it running out of funds
     function naiveStreamBalance(Stream s) internal constant returns (uint256) {
         return (now - s.startTimestamp) * s.perSecond;
@@ -152,19 +159,23 @@ contract Streem {
      * Implements min(outgoingStreamBalance, staticBalance + incomingStreamBalance)
      * TODO: due to the involved recursion, this will lead to an endless loop in circular relations, e.g. A -> B, B -> A
      */
-    function streamBalance(Stream s) internal constant returns (uint256) {
+    function streamBalance(Stream s, Stream origin, uint hops) internal constant returns (uint256) {
         // naming: osb -> outgoingStreamBalance, isb -> incomingStreamBalance, sb -> static balance
         uint256 osb = naiveStreamBalance(s);
 
-        var inS = getInStreamOf(s.sender);
-        uint256 isb = exists(inS) ? streamBalance(inS) : 0;
+        if(equals(s, origin)) { // special case: break on circular dependency. TODO: proof correctness
+            return osb;
+        } else {
+            var inS = getInStreamOf(s.sender);
+            uint256 isb = exists(inS) ? streamBalance(inS, origin, hops + 1) : 0;
 
-        int sb = settledBalances[s.sender];
+            int sb = settledBalances[s.sender];
 
-        // TODO: Proof needed
-        assert(sb + int(isb) >= 0);
+            // TODO: Proof needed
+            assert(sb + int(isb) >= 0);
 
-        return min(osb, uint(sb + int(isb)));
+            return min(osb, uint(sb + int(isb)));
+        }
     }
 
     // this balance function can return a negative value if an outgoing stream went "under water"
@@ -193,10 +204,10 @@ contract Streem {
     function balanceOf(address _owner) constant returns (uint256) {
         var inS = getInStreamOf(_owner);
         // no prettier null check possible? https://ethereum.stackexchange.com/questions/871/what-is-the-zero-empty-or-null-value-of-a-struct
-        uint256 inStreamBal = exists(inS) ? streamBalance(inS) : 0;
+        uint256 inStreamBal = exists(inS) ? streamBalance(inS, inS, 1) : 0;
 
         var outS = getOutStreamOf(_owner);
-        uint256 outStreamBal = exists(outS) ? streamBalance(outS) : 0;
+        uint256 outStreamBal = exists(outS) ? streamBalance(outS, outS, 1) : 0;
 
         // TODO: check overflow before casting
         assert(settledBalances[_owner] + int(inStreamBal) - int(outStreamBal) >= 0);
