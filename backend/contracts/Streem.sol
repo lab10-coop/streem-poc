@@ -163,7 +163,7 @@ contract Streem {
         // naming: osb -> outgoingStreamBalance, isb -> incomingStreamBalance, sb -> static balance
         uint256 osb = naiveStreamBalance(s);
 
-        if(equals(s, origin)) { // special case: break on circular dependency. TODO: proof correctness
+        if(equals(s, origin) && hops > 1) { // special case: break on circular dependency. TODO: proof correctness
             return osb;
         } else {
             var inS = getInStreamOf(s.sender);
