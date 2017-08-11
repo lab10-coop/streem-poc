@@ -42,10 +42,34 @@ contract Streem {
 
     // constructor
     function Streem(uint initialSupply) {
+        assert(totalSupply > 0);
         owner = msg.sender;
         settledBalances[msg.sender] = int(initialSupply);
         totalSupply = initialSupply;
         streams.push(Stream(0,0,0,0)); // empty first element for implicit null-like semantics
+    }
+
+    // ################## Public functions ###################
+
+    // ERC-20 compliant function for discrete transfers
+    function transfer(address _to, uint256 _value) {
+        assert(_value > 0 && balanceOf(msg.sender) >= _value);
+
+        // if the settled balance doesn't suffice, settle the available funds of the ingoing stream.
+        // this would potentially reduce the dependency graph, but make the logic more complex
+        /*
+        if (settledBalances[msg.sender] < int(_value)) {
+            var inS = getInStreamOf(msg.sender);
+            settleStream(inS);
+
+            // lets check again! TODO: once the logic was validated / proofed, this checks should be superfluous
+            assert(balanceOf(msg.sender) >= _value);
+        }
+        */
+
+        settledBalances[msg.sender] -= int(_value);
+        settledBalances[_to] += int(_value);
+        Transfer(msg.sender, _to, _value);
     }
 
     /*
@@ -63,6 +87,37 @@ contract Streem {
 
         StreamOpened(msg.sender, receiver, perSecond);
     }
+
+    // settle and close the outgoing stream
+    function closeStream() {
+        var outS = getOutStreamOf(msg.sender);
+        assert(exists(outS));
+        var (settleBal, outstandingBal) = settleStream(outS);
+
+        StreamClosed(msg.sender, outS.receiver, outS.perSecond, settleBal, outstandingBal);
+
+        // make sure this remains the last statement because the stream handle is a reference
+        deleteOutStreamOf(msg.sender);
+    }
+
+    // TODO: implement the fallback function?
+
+    // ################## Public constant functions ###################
+
+    function balanceOf(address _owner) constant returns (uint256) {
+        var inS = getInStreamOf(_owner);
+        // no prettier null check possible? https://ethereum.stackexchange.com/questions/871/what-is-the-zero-empty-or-null-value-of-a-struct
+        uint256 inStreamBal = exists(inS) ? streamBalance(inS, inS, 1) : 0;
+
+        var outS = getOutStreamOf(_owner);
+        uint256 outStreamBal = exists(outS) ? streamBalance(outS, outS, 1) : 0;
+
+        // TODO: check overflow before casting
+        assert(settledBalances[_owner] + int(inStreamBal) - int(outStreamBal) >= 0);
+        return uint(settledBalances[_owner] + int(inStreamBal) - int(outStreamBal));
+    }
+
+    // ################## Internal functions ###################
 
     // returns the settled balance and the outstanding balance (> 0 if underfunded)
     function settleStream(Stream s) internal returns (uint, uint) {
@@ -86,37 +141,13 @@ contract Streem {
         return (settleBal, naiveBal - settleBal);
     }
 
-    // settle and close the outgoing stream
-    function closeStream() {
-        var outS = getOutStreamOf(msg.sender);
-        assert(exists(outS));
-        var (settleBal, outstandingBal) = settleStream(outS);
-
-        StreamClosed(msg.sender, outS.receiver, outS.perSecond, settleBal, outstandingBal);
-
-        // make sure this remains the last statement because the stream handle is a reference
-        deleteOutStreamOf(msg.sender);
+    // as long as only senders can close a stream, this is only needed for outstreams
+    function deleteOutStreamOf(address addr) internal {
+        var sid = outStreamPtrs[addr];
+        delete streams[sid];
     }
 
-    // ERC-20 compliant function for discrete transfers
-    function transfer(address _to, uint256 _value) {
-        assert(_value > 0 && balanceOf(msg.sender) >= _value);
-
-        // if the settled balance doesn't suffice, settle the available funds of the ingoing stream.
-        /*
-        if(settledBalances[msg.sender] < int(_value)) {
-            var inS = getInStreamOf(msg.sender);
-            settleStream(inS);
-
-            // lets check again! TODO: once the logic was validated / proofed, this checks should be superfluous
-            assert(balanceOf(msg.sender) >= _value);
-        }
-        */
-
-        settledBalances[msg.sender] -= int(_value);
-        settledBalances[_to] += int(_value);
-        Transfer(msg.sender, _to, _value);
-    }
+    // ################## Internal constant functions ###################
 
     // Solidity (so far) has no simple null check, using startTimestamp as guard (assuming 1970 will not come back).
     function exists(Stream s) internal constant returns (bool) {
@@ -135,12 +166,6 @@ contract Streem {
 
     function getInStreamOf(address addr) internal constant returns (Stream storage) {
         return streams[inStreamPtrs[addr]];
-    }
-
-    // as long as only senders can close a stream, this is only needed for outstreams
-    function deleteOutStreamOf(address addr) internal {
-        var sid = outStreamPtrs[addr];
-        delete streams[sid];
     }
 
     function equals(Stream s1, Stream s2) internal constant returns (bool) {
@@ -163,7 +188,7 @@ contract Streem {
         // naming: osb -> outgoingStreamBalance, isb -> incomingStreamBalance, sb -> static balance
         uint256 osb = naiveStreamBalance(s);
 
-        if(equals(s, origin) && hops > 1) { // special case: break on circular dependency. TODO: proof correctness
+        if (equals(s, origin) && hops > 1) { // special case: break on circular dependency. TODO: proof correctness
             return osb;
         } else {
             var inS = getInStreamOf(s.sender);
@@ -178,46 +203,7 @@ contract Streem {
         }
     }
 
-    // this balance function can return a negative value if an outgoing stream went "under water"
-    // and a higher than real balance if an incoming stream went "under water".
-    // note that this is NOT the actual balance, just a theoretical value
-    // TODO: refactor
-    //    function owedBalanceOf(address _owner) constant returns (int256 balance) {
-    //        uint256 inStreamBal = 0;
-    //        var inStream = inStreams[_owner];
-    //        // no prettier null check possible? https://ethereum.stackexchange.com/questions/871/what-is-the-zero-empty-or-null-value-of-a-struct
-    //        if(inStream.startTimestamp != 0) {
-    //            inStreamBal = (now - inStream.startTimestamp) * inStream.perSecond;
-    //        }
-    //
-    //        uint256 outStreamBal = 0;
-    //        var outStream = outStreams[_owner];
-    //        if(outStream.startTimestamp != 0) {
-    //            outStreamBal = (now - outStream.startTimestamp) * outStream.perSecond;
-    //        }
-    //
-    //        // TODO: check overflow before casting
-    //        balance = int256(settledBalances[_owner] + inStreamBal - outStreamBal);
-    //        return balance;
-    //    }
-
-    function balanceOf(address _owner) constant returns (uint256) {
-        var inS = getInStreamOf(_owner);
-        // no prettier null check possible? https://ethereum.stackexchange.com/questions/871/what-is-the-zero-empty-or-null-value-of-a-struct
-        uint256 inStreamBal = exists(inS) ? streamBalance(inS, inS, 1) : 0;
-
-        var outS = getOutStreamOf(_owner);
-        uint256 outStreamBal = exists(outS) ? streamBalance(outS, outS, 1) : 0;
-
-        // TODO: check overflow before casting
-        assert(settledBalances[_owner] + int(inStreamBal) - int(outStreamBal) >= 0);
-        return uint(settledBalances[_owner] + int(inStreamBal) -int(outStreamBal));
-    }
-
-    // TODO: implement the empty function?
-
-
-    // ####################### dev / testing helpers #############################
+    // ####################### dev / testing helpers #########################
 
     // TODO: this is just for the test token. Issuance mechanism for mainnet token to be decided.
     function dev_issueTo(address receiver, uint256 amount) {
@@ -233,7 +219,7 @@ contract Streem {
         outStreamPtrs[msg.sender] = 0;
         inStreamPtrs[msg.sender] = 0;
 
-        if(msg.sender == owner) {
+        if (msg.sender == owner) {
             settledBalances[msg.sender] = int(totalSupply);
 
             delete streams;
