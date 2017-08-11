@@ -6,18 +6,45 @@
 </head>
 
 <body>
-    <h3>Streem PoC Demo</h3>
-    <p>Works only in an Ethereum aware Browser (e.g. Mist, Browser with Metamask plugin).<br>
+    <h2>Streem PoC Demo</h2>
+    <p>Works only in an Ethereum aware Browser (e.g. Mist, Chromium/Chrome with <a href="http://metamask.io" target="_blank">Metamask</a> plugin).<br>
     The connected Blockchain needs to have the Streem contract deployed and the file js/streem_contract.js needs to have the correct contract ABI and address.<br></p>
-    Receiver: <input id="receiver" type="text"/><br>
-    Speed (units per second): <input id="speed" type="number"/><br>
-    <button id="start-stream">Start Stream</button><br>
-    <button id="stop-stream">Stop Stream</button><br>
-
     <hr>
-    My balance: <span id="mybalance-result">-</span><br>
-    Receiver balance: <span id="somebalance-result">-</span><br>
-    <p>(Automatically updated with every new block)</p>
+    <h3>General</h3>
+    Contract address: <span id="contractaddr">-</span><br>
+    My address: <span id="ownaddr">-</span><br>
+    Network: <span id="network">-</span><br>
+    Blockchain height: <span id="blocknr">-</span><br>
+    <br>
+    My Ether balance: <span id="etherbalance">-</span><br>
+    My Streem balance: <span id="streembalance">-</span><br>
+    Last pending transaction: <span id="pendingtx"></span> - <span id="pendingtxcounter"></span><br>
+    Last executed transaction: <span id="executedtx">-</span><br>
+    <hr>
+    <h3>Stream states</h3>
+    <b>Incoming Stream</b><br>
+    sender: <span id="in-sender">-</span> | speed (tokens/sec): <span id="in-speed">-</span> | age (sec): <span id="in-age">-</span> | funds left for (sec): <span id="in-runway">-</span><br>
+    <br>
+    <b>Outgoing Stream</b><br>
+    receiver: <span id="out-receiver">-</span> | speed (tokens/sec): <span id="out-speed">-</span> | age (sec): <span id="out-age">-</span> | funds left for (sec): <span id="out-runway">-</span><br>
+    <br>
+    Note that <i>funds left for</i> is calculated based on the current balance, ignoring expected future funds from open incoming streams (since they are not assured).<br>
+    <hr>
+    <h3>Outgoing Stream control</h3>
+    There can be only one open stream at a time. This interface is totally dumb, it's up to you to do things in the right order.<br>
+    Note that after issuing a command, it can take some time (up to ~30 seconds) for it to take effect.<br>
+    <br>
+    Receiver: <input id="receiver" type="text"/><br>
+    Speed (tokens per second): <input id="speed" type="number"/><br>
+    <button id="open-stream">Open Stream</button><br>
+    <button id="close-stream">Close Stream</button><br>
+    <hr>
+    <h3>Discrete transfer</h3>
+    Here you can do a <i>normal</i> token transfer. This can be done in parallel to an open stream.<br>
+    <br>
+    Receiver: <input id="transfer-receiver" type="text"/><br>
+    Amount: <input id="transfer-amount" type="text"/><br>
+    <button id="transfer">Transfer</button><br>
 
     <script type="text/javascript" src="lib/web3.js"></script>
     <script type="text/javascript" src="js/streem_contract.js"></script>
