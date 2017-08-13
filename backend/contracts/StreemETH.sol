@@ -2,17 +2,12 @@ pragma solidity ^0.4.13;
 
 import "./Streem.sol";
 
-// inspired by https://github.com/mattdf/payment-channel/blob/master/channel.sol
-
-// one instance represents one ERC20 token, the rest is very similar to the normal Streem contract.
-// a model where a contract exists per user would offer more implicit security, but be less efficient (?)
 contract StreemETH is Streem {
     event Deposit(address sender, uint amount);
     event Withdrawal(address sender, uint amount);
 
+    // constructor: just call the base constructor with the right args
     function StreemETH() Streem(0, "Streaming Ether", "SETH", 18) {}
-
-    // function charge is to be handled outside of this contract (direct call of token.transfer(trusteeAddr, amount))
 
     // conversion from StreemETH to ETH
     function withdraw(uint256 amount) {
@@ -23,7 +18,7 @@ contract StreemETH is Streem {
         msg.sender.transfer(amount);
         Withdrawal(msg.sender, amount);
     }
-    // converstion from ETH to StreemETH
+    // conversion from ETH to StreemETH
     function() payable {
         settledBalances[msg.sender] += int(msg.value);
         totalSupply += msg.value;
