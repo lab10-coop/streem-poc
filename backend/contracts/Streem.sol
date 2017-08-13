@@ -1,15 +1,15 @@
 // TODO: use the SafeMath lib of openzeppelin (implicit overflow checks etc)?
 // TODO: check if this complies with the recommended style: http://solidity.readthedocs.io/en/develop/style-guide.html
 
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.13;
 
 // Status of this contract: PoC of a basic ERC-20 token with streaming functionality (1 outgoing/incoming stream per account)
 // TODO: decide on vocabularity for start/open, stop/close, dry/run out of funds/underwater (distinguish between low and no current funding)
 contract Streem {
     uint256 public totalSupply;
-    string public constant name = "Streem";
-    string public constant symbol = "STR";
-    uint8 public constant decimals = 0;
+    string public name;
+    string public symbol;
+    uint8 public decimals;
     address owner;
 
     /*
@@ -41,17 +41,20 @@ contract Streem {
     event StreamClosed(address indexed _from, address indexed _to, uint256 _perSecond, uint256 _settledBalance, uint256 _outstandingBalance);
 
     // constructor
-    function Streem(uint initialSupply) {
-        assert(totalSupply > 0);
+    function Streem(uint initialSupply, string _name, string _symbol, uint8 _decimals) {
         owner = msg.sender;
         settledBalances[msg.sender] = int(initialSupply);
         totalSupply = initialSupply;
+        name = _name;
+        symbol = _symbol;
+        decimals = _decimals;
         streams.push(Stream(0,0,0,0)); // empty first element for implicit null-like semantics
     }
 
     // ################## Public functions ###################
 
     // ERC-20 compliant function for discrete transfers
+    // TODO: the standard seems to require bool return value
     function transfer(address _to, uint256 _value) {
         assert(_value > 0 && balanceOf(msg.sender) >= _value);
 
@@ -78,6 +81,8 @@ contract Streem {
      */
     function openStream(address receiver, uint256 perSecond) {
         assert(! exists(getOutStreamOf(msg.sender)));
+        // TODO: signal this with an event, otherwise it's difficult for clients to understand what's going wrong
+        assert(! exists(getInStreamOf(receiver)));
         //assert(balanceOf(msg.sender) > perSecond);
         assert(balanceOf(msg.sender) >= 0); //TODO: what initial requirement makes most sense?
         // now is an alias to block.timestamp. See http://solidity.readthedocs.io/en/develop/units-and-global-variables.html?highlight=blocknumber
