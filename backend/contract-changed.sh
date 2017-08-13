@@ -10,4 +10,5 @@ set -u
 truffle migrate --reset
 
 node apply_contract_update.js build/contracts/Streem.json ../frontend/js/streem_contract.js
+node apply_contract_update.js build/contracts/StreemETH.json ../frontend/js/streemETH_contract.js
 echo "update applied"

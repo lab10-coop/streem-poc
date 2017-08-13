@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Streem</title>
+    <meta charset="UTF-8">
+</head>
+
+<body>
+<h2>StreemETH PoC Demo</h2>
+<p>Works only in an Ethereum aware Browser (e.g. Mist, Chromium/Chrome with <a href="http://metamask.io" target="_blank">Metamask</a> plugin).<br>
+    Makes ETH streamable. This works by depositing ETH to the contract, converting it to StreemETH (SETH) which is an ERC20 compatible token. The contract then treats those ETH like Streem tokens.<br>
+    The similarity to payment channels ends here, several disadvantages of them are not shared:<br>
+    * Deposited funds can be withdrawn anytime - as long as the current balance (and in future restrictions dictated by open streams) allows it. This is true even while streams are open. Thus, no timelock mechanism is needed.<br>
+    * Similarly, additional deposits (refunding) can be made anytime (by simply sending ETH to the contract - which is the cheapest possible transaction).<br>
+    * Deposited funds can be used in different streams. Thus they're not limited to a single, predetermined receiver like with payment channels.<br>
+</p>
+<font color="red">Note that amounts are shown and parsed as (Streem)Ether and internally converted to Wei. Thus you may want to use floating-point numbers for deposit/withdrawal amounts and stream speeds. E.g. 0.01</font>
+<hr>
+
+<h3>General</h3>
+Contract address: <span id="contractaddr">-</span><br>
+My address: <span id="ownaddr">-</span><br>
+Network: <span id="network">-</span><br>
+Blockchain height: <span id="blocknr">-</span><br>
+<br>
+My Ether balance: <span id="etherbalance">-</span><br>
+My StreemEther balance: <span id="streemethbalance">-</span><br>
+Last pending transaction: <span id="pendingtx"></span> - <span id="pendingtxcounter"></span><br>
+Last executed transaction: <span id="executedtx">-</span><br>
+<hr>
+
+<h3>Stream states</h3>
+<b>Incoming Stream</b><br>
+sender: <span id="in-sender">-</span> | speed (seth/sec): <span id="in-speed">-</span> | age (sec): <span id="in-age">-</span> | funds left for (sec): <span id="in-runway">-</span><br>
+<br>
+<b>Outgoing Stream</b><br>
+receiver: <span id="out-receiver">-</span> | speed (seth/sec): <span id="out-speed">-</span> | age (sec): <span id="out-age">-</span> | funds left for (sec): <span id="out-runway">-</span><br>
+<br>
+Note that <i>funds left for</i> is calculated based on the current balance, ignoring expected future funds from open incoming streams (since they are not assured).<br>
+<hr>
+<h3>Outgoing Stream control</h3>
+There can be only one open stream at a time. This interface is totally dumb, it's up to you to do things in the right order.<br>
+Note that after issuing a command, it can take some time (up to ~30 seconds) for it to take effect.<br>
+<br>
+Receiver: <input id="receiver" type="text"/><br>
+Speed (seth per second): <input id="speed" type="number"/><br>
+<button id="open-stream">Open Stream</button><br>
+<button id="close-stream">Close Stream</button><br>
+<hr>
+
+<h3>Deposit</h3>
+Here you can deposit ETH to the StreemETH contract in order to make it streamable.<br>
+<br>
+Amount: <input id="deposit-amount" type="text"/><br>
+<button id="deposit">Deposit</button><br>
+<hr>
+
+<h3>Withdraw</h3>
+Here you can withdraw StreemETH, converting it back to Ether. This can be done in parallel to an open stream.<br>
+<br>
+Amount: <input id="withdraw-amount" type="text"/><br>
+<button id="withdraw">Withdraw</button><br>
+<hr>
+Note: Since StreemETH is just another ERC20 token, we could also offer a discrete transfer option here. Left out for now to avoid confusion.
+
+<script type="text/javascript" src="lib/web3.js"></script>
+<script type="text/javascript" src="js/streemETH_contract.js"></script>
+<script type="text/javascript" src="js/streemETH.js"></script>
+</body>
+</html>
