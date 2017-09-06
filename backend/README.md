@@ -1,7 +1,7 @@
 # How to run
 
-Needs truffle installed: `npm install -g truffle`  
-Start testrpc: `truffle-testrpc`  
+Needs truffle and testrpc installed: `npm install -g truffle ethereumjs-testrpc`  
+Start testrpc: `testrpc`  
 Then, in another tab run `./contract-changed.sh` whenever the contract should be re-compiled JS bindings updated.  
 TODO: Add watcher option.
 
