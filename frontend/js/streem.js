@@ -4,13 +4,14 @@ function initContract() {
         const abi = contract.abi;
 
         // get address - in case of multiple network entries, the last seems to be a safe bet
-        /*
         for(let networkId in contract.networks) {
             //console.log(contract.networks[networkId])
             var address = contract.networks[networkId].address
         }
-        */
-        var address = '0xf73f6bd052061bb84913be57d5f7565b0aa38827'
+
+        // in order to hardcode an address (e.g. of a public testnet),
+        // comment out the loop above, set the address in next line and uncomment
+        // var address = '0xf73f6bd052061bb84913be57d5f7565b0aa38827' // rinkeby deployment
 
         var Web3 = require('web3');
 
@@ -68,6 +69,12 @@ function initContract() {
     })
 }
 
+/*
+NOTE: gas amounts for contract calls are hardcoded to an arbitrary value.
+Should instead be inferred via gas estimation upfront.
+*/
+const GASLIMIT = 200000
+
 function onOpenStreamButton() {
     console.log("open stream clicked")
 
@@ -75,23 +82,24 @@ function onOpenStreamButton() {
     const speed = document.getElementById('speed').value
 
     console.log(`opening stream to ${rcv} with speed ${speed}`)
-    streem.openStream(rcv, speed, {gas: 200000}, txHandler) // TODO: gas is just a guess to make it working on testrpc
+    streem.openStream(rcv, speed, {gas: GASLIMIT}, txHandler)
 }
 
 // TODO: first test locally if it can be executed
 function onCloseStreamButton() {
     console.log("close stream clicked")
-    streem.closeStream({gas: 200000}, txHandler) // TODO: gas is just a guess to make it working on testrpc
+    streem.closeStream({gas: GASLIMIT}, txHandler)
 }
 
 function onTransferButton() {
     console.log("transfer clicked")
     const rcv = document.getElementById('transfer-receiver').value
     const amount = document.getElementById('transfer-amount').value
-    streem.transfer(rcv, amount, {gas: 200000}, txHandler) // TODO: gas is just a guess to make it working on testrpc
+    streem.transfer(rcv, amount, {gas: GASLIMIT}, txHandler)
 }
 
 // TODO: how to detect failure of a transaction? See https://ethereum.stackexchange.com/questions/6007/how-can-the-transaction-status-from-a-thrown-error-be-detected-when-gas-can-be-e
+// update: this was written pre-byzantium. TBD with check of status field now
 function txHandler(err, txHash) {
     if(err) {
         console.log(`transfer failed: ${err}`)

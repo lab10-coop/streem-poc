@@ -55,7 +55,7 @@ contract Streem {
 
     // ERC-20 compliant function for discrete transfers
     // TODO: the standard seems to require bool return value
-    function transfer(address _to, uint256 _value) {
+    function transfer(address _to, uint256 _value) returns (bool) {
         assert(_value > 0 && balanceOf(msg.sender) >= _value);
 
         // if the settled balance doesn't suffice, settle the available funds of the ingoing stream.
@@ -73,6 +73,7 @@ contract Streem {
         settledBalances[msg.sender] -= int(_value);
         settledBalances[_to] += int(_value);
         Transfer(msg.sender, _to, _value);
+        return true;
     }
 
     /*
@@ -134,10 +135,10 @@ contract Streem {
 
         settledBalances[s.sender] -= int(settleBal);
         settledBalances[s.receiver] += int(settleBal); // inS.receiver == msg.sender
-        // TODO: make sure we really don't need an extra field for this intermediate settlement.
+        // TODO: make sure we don't need an extra field if invoking this for open streams.
         // For correct behaviour, it's irrelevant what the start time of the stream is.
         // Applications can rely on the StreamOpened-Event for the UI.
-        // Still, the field may need a name better reflecting this flexible use.
+        // Still, the field may need a name better reflecting this semantics.
         s.startTimestamp += dt;
         // TODO: disable checks in prod if they cost gas and the logic is proofed
         assert(s.startTimestamp <= now);
@@ -154,7 +155,7 @@ contract Streem {
 
     // ################## Internal constant functions ###################
 
-    // Solidity (so far) has no simple null check, using startTimestamp as guard (assuming 1970 will not come back).
+    // Solidity (so far) has no simple null check, using startTimestamp as guard (assuming we'll not overflow back to 1970).
     function exists(Stream s) internal constant returns (bool) {
         return s.startTimestamp != 0;
     }
@@ -187,13 +188,12 @@ contract Streem {
      * returns the "real" (based on sender solvency) balance of a stream.
      * This takes the perspective of the sender, making the stream under investigation an outgoingStream.
      * Implements min(outgoingStreamBalance, staticBalance + incomingStreamBalance)
-     * TODO: due to the involved recursion, this will lead to an endless loop in circular relations, e.g. A -> B, B -> A
      */
     function streamBalance(Stream s, Stream origin, uint hops) internal constant returns (uint256) {
         // naming: osb -> outgoingStreamBalance, isb -> incomingStreamBalance, sb -> static balance
         uint256 osb = naiveStreamBalance(s);
 
-        if (equals(s, origin) && hops > 1) { // special case: break on circular dependency. TODO: proof correctness
+        if (equals(s, origin) && hops > 1) { // special case: stop when detecting a cycle. TODO: proof correctness
             return osb;
         } else {
             var inS = getInStreamOf(s.sender);
@@ -210,7 +210,7 @@ contract Streem {
 
     // ####################### dev / testing helpers #########################
 
-    // TODO: this is just for the test token. Issuance mechanism for mainnet token to be decided.
+    // TODO: this is just for the test token
     function dev_issueTo(address receiver, uint256 amount) {
         require(msg.sender == owner);
         settledBalances[receiver] += int(amount);

@@ -152,10 +152,16 @@ window.addEventListener('load', () => {
 
 // ############################################################################
 
+/*
+NOTE: gas amounts for contract calls are hardcoded to an arbitrary value.
+Should instead be inferred via gas estimation upfront.
+*/
+const GASLIMIT = 200000
+
 // closes the outgoing streams of the test accounts
 // this will throw an expection for accounts without outstream. Doesn't hurt us.
 function close() {
-    applyForTestAccs(addr => {streem.closeStream({from: addr, gas: 200000}, (err, ret) => {
+    applyForTestAccs(addr => {streem.closeStream({from: addr, gas: GASLIMIT}, (err, ret) => {
         if(err) console.log(`closeStream failed for ${addr}`)
     })})
 }
@@ -169,28 +175,28 @@ function freeze() {
 
 function reset() {
     console.log('resetting...')
-    applyForTestAccs(addr => streem.dev_reset( {from: addr, gas: 2000000} )) //note that this is more gas!
+    applyForTestAccs(addr => streem.dev_reset( {from: addr, gas: GASLIMIT * 10} ))
 }
 
 // test: balances are correct
 function test1() {
     console.log('open stream1: speed 1 from addr0 to addr1')
-    streem.openStream(web3.eth.accounts[1], 1, {from: web3.eth.accounts[0], gas: 200000})
+    streem.openStream(web3.eth.accounts[1], 1, {from: web3.eth.accounts[0], gas: GASLIMIT})
 
     console.log('open stream2: speed 1 from addr1 to addr2')
-    streem.openStream(web3.eth.accounts[2], 1, {from: web3.eth.accounts[1], gas: 200000})
+    streem.openStream(web3.eth.accounts[2], 1, {from: web3.eth.accounts[1], gas: GASLIMIT})
 }
 
-// test: dryed out stream
+// test: underfunded stream
 function test1a() {
     // ...
     console.log('closing stream1')
-    streem.closeStream({from: web3.eth.accounts[0], gas: 200000})
+    streem.closeStream({from: web3.eth.accounts[0], gas: GASLIMIT})
 
     console.log('waiting 20 sec...')
     setTimeout( () => {
         console.log('closing stream2')
-        streem.closeStream({from: web3.eth.accounts[1], gas: 200000})
+        streem.closeStream({from: web3.eth.accounts[1], gas: GASLIMIT})
     }, 20000)
     // assert: bal(addr1) is 0, stream2 stalls
 }
@@ -198,10 +204,10 @@ function test1a() {
 // test: underfunded stream
 function test2() {
     console.log('open stream1: speed 1 from addr0 to addr1')
-    streem.openStream(web3.eth.accounts[1], 1, {from: web3.eth.accounts[0], gas: 200000})
+    streem.openStream(web3.eth.accounts[1], 1, {from: web3.eth.accounts[0], gas: GASLIMIT})
 
     console.log('open stream2: speed 2 from addr1 to addr2')
-    streem.openStream(web3.eth.accounts[2], 2, {from: web3.eth.accounts[1], gas: 200000})
+    streem.openStream(web3.eth.accounts[2], 2, {from: web3.eth.accounts[1], gas: GASLIMIT})
 
     // wait 10
     // assert: bal(addr1) is 0, lab(addr2) is 5
@@ -212,54 +218,54 @@ function test2() {
 
 function test3() {
     console.log('open stream1: speed 1 from addr0 to addr1')
-    streem.openStream(web3.eth.accounts[1], 1, {from: web3.eth.accounts[0], gas: 200000})
+    streem.openStream(web3.eth.accounts[1], 1, {from: web3.eth.accounts[0], gas: GASLIMIT})
 
     console.log('open stream2: speed 1 from addr1 to addr0')
-    streem.openStream(web3.eth.accounts[0], 1, {from: web3.eth.accounts[1], gas: 200000})
+    streem.openStream(web3.eth.accounts[0], 1, {from: web3.eth.accounts[1], gas: GASLIMIT})
 }
 
 function test3a() {
     console.log('open stream1: speed 1 from addr0 to addr1')
-    streem.openStream(web3.eth.accounts[1], 1, {from: web3.eth.accounts[0], gas: 200000})
+    streem.openStream(web3.eth.accounts[1], 1, {from: web3.eth.accounts[0], gas: GASLIMIT})
 
     console.log('open stream2: speed 2 from addr1 to addr0')
-    streem.openStream(web3.eth.accounts[0], 2, {from: web3.eth.accounts[1], gas: 200000})
+    streem.openStream(web3.eth.accounts[0], 2, {from: web3.eth.accounts[1], gas: GASLIMIT})
 }
 
 function test3b() {
     console.log('open stream1: speed 2 from addr0 to addr1')
-    streem.openStream(web3.eth.accounts[1], 2, {from: web3.eth.accounts[0], gas: 200000})
+    streem.openStream(web3.eth.accounts[1], 2, {from: web3.eth.accounts[0], gas: GASLIMIT})
 
     console.log('open stream2: speed 1 from addr1 to addr0')
-    streem.openStream(web3.eth.accounts[0], 1, {from: web3.eth.accounts[1], gas: 200000})
+    streem.openStream(web3.eth.accounts[0], 1, {from: web3.eth.accounts[1], gas: GASLIMIT})
 }
 
 function test3c() {
     console.log('open stream1: speed 2 from addr1 to addr2')
-    streem.openStream(web3.eth.accounts[2], 2, {from: web3.eth.accounts[1], gas: 200000})
+    streem.openStream(web3.eth.accounts[2], 2, {from: web3.eth.accounts[1], gas: GASLIMIT})
 
     console.log('open stream2: speed 1 from addr2 to addr1')
-    streem.openStream(web3.eth.accounts[1], 1, {from: web3.eth.accounts[2], gas: 200000})
+    streem.openStream(web3.eth.accounts[1], 1, {from: web3.eth.accounts[2], gas: GASLIMIT})
 }
 
 function test4() {
     console.log('open stream1: speed 1 from addr0 to addr1')
-    streem.openStream(web3.eth.accounts[1], 1, {from: web3.eth.accounts[0], gas: 200000})
+    streem.openStream(web3.eth.accounts[1], 1, {from: web3.eth.accounts[0], gas: GASLIMIT})
 
     console.log('open stream2: speed 1 from addr1 to addr2')
-    streem.openStream(web3.eth.accounts[2], 1, {from: web3.eth.accounts[1], gas: 200000})
+    streem.openStream(web3.eth.accounts[2], 1, {from: web3.eth.accounts[1], gas: GASLIMIT})
 
     console.log('open stream3: speed 1 from addr2 to addr0')
-    streem.openStream(web3.eth.accounts[0], 1, {from: web3.eth.accounts[2], gas: 200000})
+    streem.openStream(web3.eth.accounts[0], 1, {from: web3.eth.accounts[2], gas: GASLIMIT})
 }
 
 function test4a() {
     console.log('open stream1: speed 1 from addr0 to addr1')
-    streem.openStream(web3.eth.accounts[1], 1, {from: web3.eth.accounts[0], gas: 200000})
+    streem.openStream(web3.eth.accounts[1], 1, {from: web3.eth.accounts[0], gas: GASLIMIT})
 
     console.log('open stream2: speed 2 from addr1 to addr2')
-    streem.openStream(web3.eth.accounts[2], 2, {from: web3.eth.accounts[1], gas: 200000})
+    streem.openStream(web3.eth.accounts[2], 2, {from: web3.eth.accounts[1], gas: GASLIMIT})
 
     console.log('open stream3: speed 1 from addr2 to addr0')
-    streem.openStream(web3.eth.accounts[0], 1, {from: web3.eth.accounts[2], gas: 200000})
+    streem.openStream(web3.eth.accounts[0], 1, {from: web3.eth.accounts[2], gas: GASLIMIT})
 }
